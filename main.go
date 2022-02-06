@@ -15,8 +15,8 @@ import (
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
 	"github.com/hrabalvojta/micro-dvdrental/config"
 	"github.com/hrabalvojta/micro-dvdrental/health"
-	"github.com/hrabalvojta/micro-dvdrental/inmemory"
 	hb "github.com/hrabalvojta/micro-dvdrental/logger"
+	"github.com/hrabalvojta/micro-dvdrental/psql"
 	"github.com/hrabalvojta/micro-dvdrental/users"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -60,7 +60,15 @@ func main() {
 
 	fieldKeys := []string{"method"}
 
-	userRepo = inmemory.NewInMemUserRepository()
+	userRepo, _ = psql.NewPsqlUserRepository(
+		psql.DefaultHost,
+		psql.DefaultPort,
+		psql.DefaultDatabase,
+		psql.DefaultDBUser,
+		psql.DefaultPassword,
+		psql.DefaultSSLMode,
+		psql.DefaultTimeZone,
+	)
 
 	// Initialize the users service and wrap it with our middlewares
 	var us users.Service

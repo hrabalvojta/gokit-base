@@ -1,53 +1,61 @@
 package psql
 
 import (
-	"sync"
-
-	errs "github.com/hrabalvojta/micro-dvdrental/errors"
 	"github.com/hrabalvojta/micro-dvdrental/users"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
+const (
+	DefaultDatabase = "dvdrental"
+	DefaultDBUser   = "postgres"
+	DefaultHost     = "localhost"
+	DefaultPort     = "5432"
+	DefaultPassword = "secret"
+	DefaultSSLMode  = "disable"
+	DefaultTimeZone = "Europe/Prague"
+)
+
+type User struct {
+	gorm.Model
+	FirstName     string `gorm:"type:varchar(100)"`
+	LastName      string `gorm:"type:varchar(100)"`
+	FavoriteColor string `gorm:"type:varchar(100)"`
+}
+
 // inMemUserRepository is an implementation of a user repository for storage in local memory
-type inMemUserRepository struct {
-	mtx   *sync.RWMutex
-	users map[int]*users.User
+type psqlUserRepository struct {
+	conn *gorm.DB
 }
 
-// NewInMemUserRepository returns a new user repository for storage in local memory
-func NewInMemUserRepository() users.Repository {
-	return &inMemUserRepository{
-		mtx:   new(sync.RWMutex),
-		users: make(map[int]*users.User),
+func NewPsqlUserRepository(host, port, dbname, user, pass, ssl, timezone string) (users.Repository, error) {
+	dsn := "host=" + host + " port=" + port + " dbname=" + dbname + " user=" + user + " password=" + pass + " sslmode=" + ssl + " TimeZone=" + timezone
+
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	if err != nil {
+		return nil, err
 	}
+
+	db.AutoMigrate(&User{})
+
+	return &psqlUserRepository{conn: db}, nil
 }
 
-// Store inserts a user into the local user map
-func (ir *inMemUserRepository) Store(user *users.User) error {
-	ir.mtx.Lock()
-	ir.users[user.ID] = user
-	ir.mtx.Unlock()
-	return nil
+func (d *psqlUserRepository) Store(user *users.User) error {
+	result := d.conn.Create(&user)
+	return result.Error
 }
 
 // Find retrieves a single user from the repository
-func (ir *inMemUserRepository) Find(id int) (*users.User, error) {
-	ir.mtx.RLock()
-	u := ir.users[id]
-	ir.mtx.RUnlock()
-
-	if u == nil {
-		return nil, errs.ErrUserNotFound
-	}
-	return u, nil
+func (d *psqlUserRepository) Find(id int) (*users.User, error) {
+	var user users.User
+	result := d.conn.First(&user, id)
+	return &user, result.Error
 }
 
 // FindAll retrieves all users from memory
-func (ir *inMemUserRepository) FindAll() []*users.User {
-	ir.mtx.RLock()
-	allUsers := []*users.User{}
-	for _, v := range ir.users {
-		allUsers = append(allUsers, v)
-	}
-	ir.mtx.RUnlock()
-	return allUsers
+func (d *psqlUserRepository) FindAll() []*users.User {
+	users := []*users.User{}
+	d.conn.Find(&users)
+	return users
 }
