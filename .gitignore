@@ -3,7 +3,7 @@ projectFilesBackup/
 vendor/
 gokit-base
 .idea/
-
+*.log
 # Created by .ignore support plugin (hsz.mobi)
 Thumbs.db
 ehthumbs.db
