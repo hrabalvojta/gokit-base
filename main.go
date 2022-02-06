@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"sync"
 
 	"fmt"
 	"net/http"
@@ -24,7 +23,6 @@ import (
 
 // serializedLogger is our "global" application logger
 type serializedLogger struct {
-	mtx sync.Mutex
 	log.Logger
 }
 
@@ -44,8 +42,7 @@ func main() {
 	flag.Parse()
 
 	// Create and configure the logger
-	var logger log.Logger
-	logger = log.NewLogfmtLogger(os.Stderr)
+	logger := log.NewLogfmtLogger(os.Stderr)
 	logger = hb.NewHerbertFormatLogger(logger, c.Env.LogPath, c.LogLevel())
 	logger = &serializedLogger{Logger: logger}
 	logger = log.With(logger,
@@ -71,8 +68,7 @@ func main() {
 	)
 
 	// Initialize the users service and wrap it with our middlewares
-	var us users.Service
-	us = users.NewService(userRepo)
+	us := users.NewService(userRepo)
 	us = users.NewLoggingService(log.With(logger, "context_component", "users"), us)
 	us = users.NewInstrumentingService(
 		kitprometheus.NewCounterFrom(stdprometheus.CounterOpts{
@@ -110,7 +106,7 @@ func main() {
 	// Define the atreides logging channels
 	errs := make(chan error, 2)
 	go func() {
-		logger.Log("transport", "http", "address", *httpAddr, "message", "listening")
+		logger.Log("transport", "http", "address", httpAddr, "message", "listening")
 		errs <- srv.ListenAndServe()
 	}()
 	go func() {

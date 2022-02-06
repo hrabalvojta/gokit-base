@@ -2,7 +2,6 @@ package config
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/hrabalvojta/micro-dvdrental/logger"
 
@@ -62,26 +61,46 @@ func Init() *Config {
 	C := Config{}
 	C.v = viper.New()
 
-	// The consul keyspace for this application's environment config
-	environmentKeyspace := fmt.Sprintf("gokit-base/%s/env", os.Getenv("APP_ENV"))
+	// Configuring defaults
+	C.v.SetDefault("ApplicationEnvironment", "development")
+	C.v.SetDefault("ApplicationToken", "")
+	C.v.SetDefault("Debug", true)
+	C.v.SetDefault("HTTPHost", "0.0.0.0")
+	C.v.SetDefault("HTTPPort", "8080")
+	C.v.SetDefault("LogPath", ".")
+	C.v.SetDefault("LogChannel", "gokit-users")
 
-	// Set the remote configuration provider
-	consulHost := os.Getenv("CONSUL_HOST")
-	if consulHost == "" {
-		consulHost = DEFAULT_CONSUL
-	}
-	C.v.AddRemoteProvider("consul", fmt.Sprintf("%s:8500", consulHost), environmentKeyspace)
-	C.v.SetConfigType("json")
+	//C.Env = &Env{
+	//	ApplicationEnvironment: "a",
+	//	ApplicationToken:       "b",
+	//	Debug:                  false,
+	//	HTTPHost:               "c",
+	//	HTTPPort:               "8080",
+	//	LogPath:                "e",
+	//	LogChannel:             "f",
+	//}
 
-	// Read the application environment configuration and hard stop if we can't
-	if err := C.v.ReadRemoteConfig(); err != nil {
-		panic(err)
+	C.v.SetConfigName("users_config") // name of config file (without extension)
+	C.v.SetConfigType("yaml")         // REQUIRED if the config file does not have the extension in the name
+	//C.v.AddConfigPath("/etc/micro-dvdrental/") // path to look for the config file in
+	C.v.AddConfigPath("./config/") // call multiple times to add many search paths
+	//C.v.AddConfigPath(".")         // optionally look for config in the working directory
+
+	if err := C.v.ReadInConfig(); err != nil {
+		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+			// Config file not found; ignore error if desired
+		} else {
+			panic(err)
+		}
 	}
 
 	// Bring our configuration values into our defined struct or die
 	if err := C.v.Unmarshal(&C.Env); err != nil {
 		panic(err)
 	}
+
+	fmt.Printf("CONFIG: %+v\n", C.Env)
+
 	return &C
 }
 
@@ -102,7 +121,7 @@ func (a *Config) IsProduction() bool {
 
 // IsDebugEnvironment returns true if the application is in debug mode
 func (a *Config) IsDebugEnvironment() bool {
-	return a.Env.Debug == true
+	return a.Env.Debug
 }
 
 // LogLevel returns the current the application logger level

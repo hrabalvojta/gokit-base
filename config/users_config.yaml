@@ -1,0 +1,21 @@
+# ApplicationEnvironment provides production, development, or staging environment specification
+app_env: "development"
+
+# ApplicationToken is the JWT signing token used to compare incoming authentication requests with the auth middleware
+token: "pm"
+
+# Debug flags whether the application is running in debugging mode or not (increased log verbosity, no "pm", etc)
+debug: true
+
+# HTTPHost defines the hostname that the HTTP server will listen on e.g. localhost for development
+http_host: "0.0.0.0"
+
+# HTTPPort defines the port that the HTTP server will listen on e.g. 80
+http_port: "8080"
+
+# LogPath is the storage path for Herbert/Monolog style log output
+log_path: "users.log"
+
+# LogChannel defines the channel this application's logs will be tagged with. Within our "golang" app channel
+# we have defined channels by service. This value may be "gokit-base" for this project.
+channel: "gokit-users"
