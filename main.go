@@ -11,13 +11,13 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/bnelz/gokit-base/config"
-	"github.com/bnelz/gokit-base/health"
-	"github.com/bnelz/gokit-base/inmemory"
-	hb "github.com/bnelz/gokit-base/logger"
-	"github.com/bnelz/gokit-base/users"
 	"github.com/go-kit/kit/log"
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
+	"github.com/hrabalvojta/micro-dvdrental/config"
+	"github.com/hrabalvojta/micro-dvdrental/health"
+	"github.com/hrabalvojta/micro-dvdrental/inmemory"
+	hb "github.com/hrabalvojta/micro-dvdrental/logger"
+	"github.com/hrabalvojta/micro-dvdrental/users"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )

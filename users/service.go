@@ -1,7 +1,7 @@
 package users
 
 import (
-	errs "github.com/bnelz/gokit-base/errors"
+	errs "github.com/hrabalvojta/micro-dvdrental/errors"
 )
 
 // Service describes the behavior of a user service e.g. CRUD actions

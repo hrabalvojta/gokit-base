@@ -10,10 +10,10 @@ import (
 
 	"strconv"
 
-	errs "github.com/bnelz/gokit-base/errors"
 	kitlog "github.com/go-kit/kit/log"
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/gorilla/mux"
+	errs "github.com/hrabalvojta/micro-dvdrental/errors"
 )
 
 type errorer interface {
