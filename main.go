@@ -110,7 +110,7 @@ func main() {
 		errs <- srv.ListenAndServe()
 	}()
 	go func() {
-		c := make(chan os.Signal)
+		c := make(chan os.Signal, 1)
 		signal.Notify(c, syscall.SIGINT)
 		errs <- fmt.Errorf("%s", <-c)
 	}()
