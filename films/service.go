@@ -1,4 +1,4 @@
-package users
+package films
 
 import (
 	errs "github.com/hrabalvojta/micro-dvdrental/errors"

@@ -1,5 +1,5 @@
 // Users package is a sample business domain object package for application users
-package users
+package films
 
 // User describes an application user business object
 type User struct {
