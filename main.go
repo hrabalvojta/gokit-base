@@ -2,8 +2,8 @@ package main
 
 import (
 	"flag"
-
 	"fmt"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -13,10 +13,10 @@ import (
 	"github.com/go-kit/kit/log"
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
 	"github.com/hrabalvojta/micro-dvdrental/config"
+	"github.com/hrabalvojta/micro-dvdrental/films"
 	"github.com/hrabalvojta/micro-dvdrental/health"
 	hb "github.com/hrabalvojta/micro-dvdrental/logger"
 	"github.com/hrabalvojta/micro-dvdrental/psql"
-	"github.com/hrabalvojta/micro-dvdrental/users"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
@@ -52,12 +52,13 @@ func main() {
 
 	// Repository initialization
 	var (
-		userRepo users.Repository
+		userRepo films.Repository
+		err      error
 	)
 
 	fieldKeys := []string{"method"}
 
-	userRepo, _ = psql.NewPsqlUserRepository(
+	userRepo, err = psql.NewPsqlUserRepository(
 		psql.DefaultHost,
 		psql.DefaultPort,
 		psql.DefaultDatabase,
@@ -66,11 +67,14 @@ func main() {
 		psql.DefaultSSLMode,
 		psql.DefaultTimeZone,
 	)
+	if err != nil {
+		os.Exit(1)
+	}
 
 	// Initialize the users service and wrap it with our middlewares
-	us := users.NewService(userRepo)
-	us = users.NewLoggingService(log.With(logger, "context_component", "users"), us)
-	us = users.NewInstrumentingService(
+	us := films.NewService(userRepo)
+	us = films.NewLoggingService(log.With(logger, "context_component", "users"), us)
+	us = films.NewInstrumentingService(
 		kitprometheus.NewCounterFrom(stdprometheus.CounterOpts{
 			Namespace: "api",
 			Subsystem: "user_service",
@@ -90,8 +94,8 @@ func main() {
 	httpLogger := log.With(logger, "context_component", "http")
 	mux := http.NewServeMux()
 
-	mux.Handle("/api/v1/users", users.MakeHandler(us, httpLogger))
-	mux.Handle("/api/v1/users/", users.MakeHandler(us, httpLogger))
+	mux.Handle("/api/v1/users", films.MakeHandler(us, httpLogger))
+	mux.Handle("/api/v1/users/", films.MakeHandler(us, httpLogger))
 	mux.Handle("/api/v1/health", health.MakeHandler(httpLogger))
 
 	http.Handle("/", accessControl(mux))
@@ -107,7 +111,8 @@ func main() {
 	errs := make(chan error, 2)
 	go func() {
 		logger.Log("transport", "http", "address", httpAddr, "message", "listening")
-		errs <- srv.ListenAndServe()
+		socket, _ := net.Listen("tcp4", *httpAddr)
+		errs <- srv.Serve(socket)
 	}()
 	go func() {
 		c := make(chan os.Signal, 1)
